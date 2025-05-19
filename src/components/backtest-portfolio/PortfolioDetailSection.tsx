@@ -22,10 +22,10 @@ interface Metrics {
   [key: string]: any;
 }
 
-interface PortfolioLegendProps {
-  assets: Asset[];
-  colors: Record<string, string>;
-}
+// interface PortfolioLegendProps {
+//   assets: Asset[];
+//   colors: Record<string, string>;
+// }
 
 interface PortfolioDetailSectionProps {
   portfolio: Portfolio;
@@ -41,30 +41,30 @@ const colorMap: Record<string, string> = {
   'VBMFX': 'bg-gray-700',
 };
 
-const PortfolioLegend: React.FC<PortfolioLegendProps> = ({ assets, colors }) => (
-  <div className="mt-4 text-xs flex justify-center align-center gap-2">
-    {assets.length > 0 && (
-      <>
-        <div>
-          {assets.slice(0, Math.ceil(assets.length / 2)).map((asset) => (
-            <div key={asset.ticker} className="flex items-center mb-1">
-              <span className={`inline-block w-3 h-3 ${colors[asset.ticker] || 'bg-gray-300'} mr-2`}></span>
-              {asset.name}
-            </div>
-          ))}
-        </div>
-        <div>
-          {assets.slice(Math.ceil(assets.length / 2)).map((asset) => (
-            <div key={asset.ticker} className="flex items-center mb-1">
-              <span className={`inline-block w-3 h-3 ${colors[asset.ticker] || 'bg-gray-300'} mr-2`}></span>
-              {asset.name}
-            </div>
-          ))}
-        </div>
-      </>
-    )}
-  </div>
-);
+// const PortfolioLegend: React.FC<PortfolioLegendProps> = ({ assets, colors }) => (
+//   <div className="mt-4 text-xs flex justify-center align-center gap-2">
+//     {assets.length > 0 && (
+//       <>
+//         <div>
+//           {assets.slice(0, Math.ceil(assets.length / 2)).map((asset) => (
+//             <div key={asset.ticker} className="flex items-center mb-1">
+//               <span className={`inline-block w-3 h-3 ${colors[asset.ticker] || 'bg-gray-300'} mr-2`}></span>
+//               {asset.name}
+//             </div>
+//           ))}
+//         </div>
+//         <div>
+//           {assets.slice(Math.ceil(assets.length / 2)).map((asset) => (
+//             <div key={asset.ticker} className="flex items-center mb-1">
+//               <span className={`inline-block w-3 h-3 ${colors[asset.ticker] || 'bg-gray-300'} mr-2`}></span>
+//               {asset.name}
+//             </div>
+//           ))}
+//         </div>
+//       </>
+//     )}
+//   </div>
+// );
 
 const PortfolioDetailSection: React.FC<PortfolioDetailSectionProps> = ({ portfolio, metrics, benchmark, tickerData }) => {
   const assets = tickerData;
@@ -72,42 +72,39 @@ const PortfolioDetailSection: React.FC<PortfolioDetailSectionProps> = ({ portfol
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start p-6 font-sans">
-        <div>
-          <h2 className="text-xl font-bold mb-4">{portfolioName}</h2>
-          <div className='max-h-96 overflow-y-auto'>
-          <table className="border border-gray-300 w-full">
-            <thead>
-              <tr>
-                <th className="border p-2 w-24">Ticker</th>
-                <th className="border p-2 w-[400px]">Name</th>
-                <th className="border p-2 w-32">Type</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assets.map((asset) => (
-                <tr key={asset.ticker}>
-                  <td className="border p-2">{asset.ticker}</td>
-                  <td className="border p-2">{asset.name}</td>
-                  <td className="border p-2">{asset.allocation}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="flex flex-col lg:flex-row gap-6 p-6 font-sans">
+        <div className="lg:w-4/5 w-full">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800">{portfolioName}</h2>
+          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full table-fixed text-sm text-gray-700">
+                <thead className="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="border-b p-3 text-left w-24">Ticker</th>
+                    <th className="border-b p-3 text-left w-[400px]">Name</th>
+                    <th className="border-b p-3 text-left w-32">Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assets.map((asset) => (
+                    <tr key={asset.ticker} className="hover:bg-gray-50">
+                      <td className="border-t p-3">{asset.ticker}</td>
+                      <td className="border-t p-3">{asset.name}</td>
+                      <td className="border-t p-3">{asset.allocation}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          {/* <div className="mt-4 flex">
-            
-            <PortfolioSaveModal />
-          </div> */}
+          </div>
         </div>
 
-        <div>
-          <Chart apiUrl="" description="">
-            <PortfolioLegend assets={assets} colors={colorMap} />
-          </Chart>
+        <div className="lg:w-1/5 w-full mt-20">
+          <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 flex-1 min-w-[300px] items-center justify-center">
+            <Chart apiUrl="" description="" />
+          </div>
         </div>
       </div>
-
       <YearlyValueChart title="Portfolio Growth" modelId={benchmark} api="apiForAnnual" />
       <ChartBar title="Annual Returns"/>
       <RiskReturnTable data={Array.isArray(metrics) ? metrics : []} title='Risk and Return Metrics (Demo Portfolio vs Benchmark)' />
