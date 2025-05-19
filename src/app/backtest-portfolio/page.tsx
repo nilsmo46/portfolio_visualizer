@@ -1,0 +1,191 @@
+"use client"
+import { useRouter, useSearchParams } from 'next/navigation';
+import Sidebar from "@/components/backtest-portfolio/Sidebar"
+import { Button } from "@/components/ui/button"
+import { ExternalLink, FileText, FileSpreadsheet } from "lucide-react";
+import React, { Suspense, useEffect, useState } from 'react'; 
+import axios from '@/lib/axios';;
+import Loader from '@/components/Loader';
+import PortfolioDetailSection, { Portfolio } from '@/components/backtest-portfolio/PortfolioDetailSection';
+import PortfolioEditModal from '@/components/backtest-portfolio/PortfolioEditModal';
+import { baseURL } from '@/constants';
+
+// Sample metrics data
+const metrics = [
+  { metric: 'CAGR', portfolio: '9.42%', benchmark: '8.86%' },
+  { metric: 'Standard Deviation', portfolio: '9.42%', benchmark: '14.72%' },
+  { metric: 'Sharpe Ratio', portfolio: '0.73', benchmark: '0.51' },
+  { metric: 'Sortino Ratio', portfolio: '1.06', benchmark: '0.72' },
+  { metric: 'Max Drawdown', portfolio: '-30.27%', benchmark: '-50.89%' },
+  { metric: 'US Market Correlation', portfolio: '0.96', benchmark: '1.00' },
+  { metric: 'Excess Return (Annual)', portfolio: '0.56%', benchmark: '0.00%' },
+  { metric: 'Tracking Error', portfolio: '5.91%', benchmark: '0.00%' },
+  { metric: 'Information Ratio', portfolio: '0.09', benchmark: 'N/A' },
+  { metric: 'Best Year', portfolio: '28.31%', benchmark: '33.35%' },
+  { metric: 'Worst Year', portfolio: '-22.24%', benchmark: '-37.04%' }
+];
+
+const BacktestPortfolioContent = () => {
+  const searchParams = useSearchParams();
+  const modelIdFromUrl = searchParams.get('model_id');
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [isVerified, setIsVerified] = useState(false);
+  const [portfolioData, setPortfolioData] = useState<Portfolio[]>([]);
+  const [tickerData, setTickerData] = useState([])
+
+
+    useEffect(() => {
+    const makeApiCall = async () => {
+      console.log("Hello world");
+      try {
+        const res = await axios.get(`${baseURL}`);
+        console.log(res);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    makeApiCall();
+
+    const intervalId = setInterval(makeApiCall, 3000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    const fetchPortfolioData = async () => {
+      try {
+        const res = await axios.get(`${baseURL}/monthly-stats/all?sort={"year":"asc"}&limit=100&offset=0&filter={"model_id": "${modelIdFromUrl}"}`);
+        setPortfolioData(res.data);
+        const res1 = await axios.get(`${baseURL}/strategy/${modelIdFromUrl}`);
+        console.log(res1.data.ticker_strategy_map);
+        const tickerVal = res1.data.ticker_strategy_map.map((val: { [x: string]: any; }) => (
+          val["ticker"]
+        )) 
+        console.log(tickerVal);
+        setTickerData(tickerVal)
+      } catch (error) {
+        console.error("Error fetching portfolio data:", error);
+      }
+    };
+
+    async function verifyLogin() {
+      const token = localStorage.getItem("token");
+      if (token) {
+        setLoading(true);
+        try {
+          const res = await axios.get(`${baseURL}/auth/verify`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (res.data) {
+            setIsVerified(true);
+            if (modelIdFromUrl) {
+              await fetchPortfolioData();
+            }
+          } else {
+            setTimeout(() => {
+              router.push("/login");
+            }, 500);
+          }
+        } catch (error) {
+          console.error("Verification failed:", error);
+          setTimeout(() => {
+            router.push("/login");
+          }, 500);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setTimeout(() => {
+          router.push("/login");
+        }, 500);
+      }
+    }
+    
+    fetchPortfolioData()
+    verifyLogin();
+  }, [router, modelIdFromUrl]);
+
+  if (loading) {
+    return <Loader customMessage="Please wait while we verify your credentials" />;
+  }
+
+  if (!isVerified) {
+    return <Loader customMessage="Redirecting to login page..." />;
+  }
+
+  return (
+    <div className="flex no-scrollbar">
+      <Sidebar />
+      <div className="relative w-full">
+        {/* Fixed navbar */}
+        <div className=" flex justify-end fixed top-20 right-10 left-[200px] bg-[#e9ecf3]  p-2 items-center border-b rounded-md">
+          <PortfolioEditModal />
+        </div>
+        
+        {/* Main content with padding to account for fixed navbar */}
+        <div className="p-6 pt-24 space-y-6 h-screen overflow-y-auto">
+          <h1 className="text-3xl font-bold">Backtest Portfolio Asset Allocation</h1>
+          <div className="flex-col justify-center">
+            <div>
+              <h2 className="text-2xl font-semibold">Portfolio Backtesting Overview</h2>
+              <p className="mt-4 text-base text-gray-700">
+                This portfolio backtesting tool allows you to construct one or more portfolios based on the selected mutual funds, ETFs, and stocks. You can analyze and backtest portfolio returns, risk characteristics, style exposures, and drawdowns. The results cover both returns and fund fundamentals based portfolio style analysis along with risk and return decomposition by each portfolio asset. You can compare up to three different portfolios against the selected benchmark, and you can also specify any periodic contribution or withdrawal cashflows and the preferred portfolio rebalancing strategy.
+              </p>
+              <p className="mt-4 text-base text-gray-700">
+                The related <a className="text-blue-600 underline" href="#">asset class level portfolio modeling tool</a> allows you to analyze and compare asset class level portfolios with a longer time horizon starting from 1972, and you can use the <a className="text-blue-600 underline" href="#">dynamic allocation backtest tool</a> to analyze portfolios where assets or their weights have been adjusted over time.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-semibold">
+                Portfolio Analysis Results <span className="text-lg">(Jan 1997 - Mar 2025)</span>
+              </h2>
+              <div className="flex items-center space-x-4 mt-4">
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Link</span>
+                </Button>
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <FileText className="w-4 h-4" />
+                  <span>PDF</span>
+                </Button>
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Excel</span>
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm mt-6">
+                <strong>Note:</strong> The time period was constrained by the available data for Vanguard Real Estate Index Investor (VGSIX) [Jun 1996 - Mar 2025].
+              </p>
+            </div>
+          </div>
+          
+          {/* Portfolio Detail Section */}
+          <PortfolioDetailSection 
+            portfolio={portfolioData[0]} 
+            metrics={metrics} 
+            benchmark={modelIdFromUrl as string}
+            tickerData={tickerData}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Page = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BacktestPortfolioContent />
+    </Suspense>
+  );
+};
+
+export default Page;
