@@ -33,7 +33,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ name, details, link, daysTo
             
             <div className="mt-2">
                 <Link 
-                    href={`backtest-portfolio?model_id=${link}`} // Updated href
+                    href={`backtest-portfolio?model_id=${link}`}
                     className="inline-block px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors duration-150 ease-in-out"
                 >
                     View Details &raquo; 

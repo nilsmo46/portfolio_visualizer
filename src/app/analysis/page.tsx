@@ -174,7 +174,7 @@ const Content: React.FC<{ pathname: string }> = ({ pathname }) => {
                                     key={service.id || index}
                                     name={service.name} 
                                     details={service.desc} 
-                                    link={service.id} 
+                                    link={service.name} 
                                     daysToRefresh={service.daysToRefresh}
                                     benchmark={service.benchmark}
                                     niceName={service.niceName as string}
