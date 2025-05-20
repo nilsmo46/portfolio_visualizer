@@ -1,14 +1,15 @@
 "use client"
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Sidebar from "@/components/backtest-portfolio/Sidebar"
 import { Button } from "@/components/ui/button"
 import { ExternalLink, FileText, FileSpreadsheet } from "lucide-react";
 import React, { Suspense, useEffect, useState } from 'react'; 
-import axios from '@/lib/axios';;
+import axios from '@/lib/axios';
 import Loader from '@/components/Loader';
 import PortfolioDetailSection, { Portfolio } from '@/components/backtest-portfolio/PortfolioDetailSection';
 import PortfolioEditModal from '@/components/backtest-portfolio/PortfolioEditModal';
 import { baseURL } from '@/constants';
+import ProtectedRoute from '@/components/Protected-Route';
 
 // Sample metrics data
 const metrics = [
@@ -28,14 +29,11 @@ const metrics = [
 const BacktestPortfolioContent = () => {
   const searchParams = useSearchParams();
   const modelIdFromUrl = searchParams.get('model_id');
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [isVerified, setIsVerified] = useState(false);
   const [portfolioData, setPortfolioData] = useState<Portfolio[]>([]);
-  const [tickerData, setTickerData] = useState([])
+  const [tickerData, setTickerData] = useState([]);
 
-
-    useEffect(() => {
+  useEffect(() => {
     const makeApiCall = async () => {
       console.log("Hello world");
       try {
@@ -55,66 +53,32 @@ const BacktestPortfolioContent = () => {
 
   useEffect(() => {
     const fetchPortfolioData = async () => {
+      setLoading(true);
       try {
         const res = await axios.get(`${baseURL}/monthly-stats/all?sort={"year":"asc"}&limit=100&offset=0&filter={"model_id": "${modelIdFromUrl}"}`);
         setPortfolioData(res.data);
+        
         const res1 = await axios.get(`${baseURL}/strategy/${modelIdFromUrl}`);
         console.log(res1.data.ticker_strategy_map);
         const tickerVal = res1.data.ticker_strategy_map.map((val: { [x: string]: any; }) => (
           val["ticker"]
-        )) 
+        ));
         console.log(tickerVal);
-        setTickerData(tickerVal)
+        setTickerData(tickerVal);
       } catch (error) {
         console.error("Error fetching portfolio data:", error);
+      } finally {
+        setLoading(false);
       }
     };
-
-    async function verifyLogin() {
-      const token = localStorage.getItem("token");
-      if (token) {
-        setLoading(true);
-        try {
-          const res = await axios.get(`${baseURL}/auth/verify`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          if (res.data) {
-            setIsVerified(true);
-            if (modelIdFromUrl) {
-              await fetchPortfolioData();
-            }
-          } else {
-            setTimeout(() => {
-              router.push("/login");
-            }, 500);
-          }
-        } catch (error) {
-          console.error("Verification failed:", error);
-          setTimeout(() => {
-            router.push("/login");
-          }, 500);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setTimeout(() => {
-          router.push("/login");
-        }, 500);
-      }
-    }
     
-    fetchPortfolioData()
-    verifyLogin();
-  }, [router, modelIdFromUrl]);
+    if (modelIdFromUrl) {
+      fetchPortfolioData();
+    }
+  }, [modelIdFromUrl]);
 
   if (loading) {
-    return <Loader customMessage="Please wait while we verify your credentials" />;
-  }
-
-  if (!isVerified) {
-    return <Loader customMessage="Redirecting to login page..." />;
+    return <Loader customMessage="Loading portfolio data..." />;
   }
 
   return (
@@ -182,9 +146,11 @@ const BacktestPortfolioContent = () => {
 
 const Page = () => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <BacktestPortfolioContent />
-    </Suspense>
+    <ProtectedRoute>
+      <Suspense fallback={<div>Loading...</div>}>
+        <BacktestPortfolioContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 };
 

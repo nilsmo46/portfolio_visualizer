@@ -2,9 +2,8 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { HiMenu, HiX, HiChevronDown, HiUserCircle } from "react-icons/hi";
-import axios from "axios";
 import { useRouter } from "next/navigation";
-import { baseURL } from "@/constants";
+import { useAuth } from "@/stores/useAuth";
 
 interface NavLink {
     label: string;
@@ -138,38 +137,13 @@ const Navbar = () => {
     const router = useRouter();
     const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
     const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-    const [loading, setLoading] = useState<boolean>(false);
+    const { isLoggedIn, loading, verifyLogin, logout } = useAuth();
     const dropdownRefs = useRef<(HTMLDivElement | null)[]>([]);
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        async function verifyLogin() {
-            const token = localStorage.getItem("token");
-            if (token) {
-                setLoading(true);
-                try {
-                    const res = await axios.get(`${baseURL}/auth/verify`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-                    if (res.data) {
-                        setIsLoggedIn(true);
-                    }
-                } catch (error) {
-                    console.error("Verification failed:", error);
-                    localStorage.removeItem("token");
-                    setIsLoggedIn(false);
-                } finally {
-                    setLoading(false);
-                }
-            } else {
-                setIsLoggedIn(false);
-            }
-        }
         verifyLogin();
-    }, []);
+    }, [verifyLogin]);
 
     useEffect(() => {
         dropdownRefs.current = dropdownRefs.current.slice(0, navItems.length);
@@ -214,8 +188,7 @@ const Navbar = () => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        setIsLoggedIn(false);
+        logout();
         router.push("/login");
     };
 
