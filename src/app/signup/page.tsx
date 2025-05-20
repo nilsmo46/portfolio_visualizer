@@ -12,10 +12,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import axios from '@/lib/axios';;
+import axios from '@/lib/axios';
 import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
 import { baseURL } from '@/constants';
+import { useAuth } from '@/stores/useAuth';
 
 type FormField = {
   id: string;
@@ -43,6 +44,8 @@ const SignUp: React.FC = () => {
 
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const { verifyLogin } = useAuth();
+  
   const { control, handleSubmit, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
       profileType: '',
@@ -70,54 +73,46 @@ const SignUp: React.FC = () => {
       marketRegion: data.marketRegion,
     }
     try {
-// <<<<<<< HEAD
       const res = await axios.post(`${baseURL}/auth/signup`, payload)
-// =======
-//       const signUpUrl = `/auth/signup`;
-//       console.log(signUpUrl, JSON.stringify(process.env), "in sign in")
-//       const res = await axios.post(signUpUrl, payload)
-// >>>>>>> a5555058f0d0e435b6babe162423884652021a1a
       localStorage.setItem("token", res.data)
+      await verifyLogin()
       router.push("/analysis")
     } catch (error) {
       console.log(error);
     }
   };
 
-
-  
-      useEffect(() => {
-            async function verifyLogin() {
-                const token = localStorage.getItem("token");
-                if (token) {
-                  setLoading(true)
-                    try {
-                        const res = await axios.get(`${baseURL}/auth/verify`, {
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            }
-                        });
-                        if (res.data) {
-                            router.push("/analysis");
-                        }
-                    } catch (error) {
-                        console.error("Verification failed:", error);
-                        // localStorage.removeItem("token");
-                    } finally {
-                      setLoading(false)
-                    }
-                }
+  useEffect(() => {
+    async function verifyLoginOnLoad() {
+      const token = localStorage.getItem("token");
+      if (token) {
+        setLoading(true)
+        try {
+          const res = await axios.get(`${baseURL}/auth/verify`, {
+            headers: {
+              Authorization: `Bearer ${token}`
             }
-            verifyLogin();
-        }, [router]);
-
-      if (loading) {
-        return (
-          <>
-            <Loader customMessage="Please wait while we verify your credentials" />
-          </>
-        )
+          });
+          if (res.data) {
+            router.push("/analysis");
+          }
+        } catch (error) {
+          console.error("Verification failed:", error);
+        } finally {
+          setLoading(false)
+        }
+      }
     }
+    verifyLoginOnLoad();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <>
+        <Loader customMessage="Please wait while we verify your credentials" />
+      </>
+    )
+  }
 
   const configFields: FormField[] = [
     {

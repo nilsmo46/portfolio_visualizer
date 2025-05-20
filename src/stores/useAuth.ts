@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import axios from '@/lib/axios';import { baseURL } from '@/constants';
+import axios from '@/lib/axios';
+import { baseURL } from '@/constants';
 ;
 
 

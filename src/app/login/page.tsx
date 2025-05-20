@@ -8,6 +8,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
 import { baseURL } from "@/constants";
+import { useAuth } from "@/stores/useAuth";
 
 interface LoginFormInputs {
   email: string;
@@ -23,6 +24,7 @@ const Login: React.FC = () => {
   } = useForm<LoginFormInputs>();
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const { verifyLogin } = useAuth();
 
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
     try {
@@ -32,6 +34,7 @@ const Login: React.FC = () => {
         })
         console.log(res.data);
         localStorage.setItem("token", res.data)
+        await verifyLogin() // Set isLoggedIn to true
         router.push("/analysis")
       } catch (error) {
         console.log(error);
@@ -39,38 +42,38 @@ const Login: React.FC = () => {
       }
   };
 
-      useEffect(() => {
-            async function verifyLogin() {
-                const token = localStorage.getItem("token");
-                if (token) {
-                  setLoading(true)
-                    try {
-                        const res = await axios.get(`${baseURL}/auth/verify`, {
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            }
-                        });
-                        if (res.data) {
-                            router.push("/analysis");
-                        }
-                    } catch (error) {
-                        console.error("Verification failed:", error);
-                        // localStorage.removeItem("token");
-                    } finally {
-                      setLoading(false)
-                    }
-                }
+  useEffect(() => {
+    async function verifyLoginOnLoad() {
+      const token = localStorage.getItem("token");
+      if (token) {
+        setLoading(true)
+        try {
+          const res = await axios.get(`${baseURL}/auth/verify`, {
+            headers: {
+              Authorization: `Bearer ${token}`
             }
-            verifyLogin();
-        }, [router]);
-
-    if (loading) {
-        return (
-          <>
-            <Loader customMessage="Please wait while we verify your credentials" />
-          </>
-        )
+          });
+          if (res.data) {
+            router.push("/analysis");
+          }
+        } catch (error) {
+          console.error("Verification failed:", error);
+          // localStorage.removeItem("token");
+        } finally {
+          setLoading(false)
+        }
+      }
     }
+    verifyLoginOnLoad();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <>
+        <Loader customMessage="Please wait while we verify your credentials" />
+      </>
+    )
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-3 sm:p-6 rounded-xs">

@@ -5,9 +5,9 @@ import { analysisFunction } from '@/constants/Analysis';
 import Link from 'next/link';
 import AnalysisCard from '@/components/analysis/Card';
 import axios from '@/lib/axios';
-import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
 import { baseURL } from '@/constants';
+import ProtectedRoute from '@/components/Protected-Route';
 
 interface AnalysisFunction {
     name: string;
@@ -32,36 +32,36 @@ const Analysis: React.FC = () => {
     const pathname = usePathname();
     
     return (
-        <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-            <Content pathname={pathname} />
-        </Suspense>
+        <ProtectedRoute>
+            <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                <Content pathname={pathname} />
+            </Suspense>
+        </ProtectedRoute>
     );
 };
 
 const Content: React.FC<{ pathname: string }> = ({ pathname }) => {
     const searchParams = useSearchParams();
     const [serviceAnalysis, setServiceAnalysis] = useState<Service[]>([]);
-    const router = useRouter();
-    const [loading, setLoading] = useState(true);
-    const [isVerified, setIsVerified] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-      useEffect(() => {
-    const makeApiCall = async () => {
-      console.log("Hello world");
-      try {
-        const res = await axios.get(`${baseURL}`);
-        console.log(res);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+    useEffect(() => {
+        const makeApiCall = async () => {
+        console.log("Hello world");
+        try {
+            const res = await axios.get(`${baseURL}`);
+            console.log(res);
+        } catch (error) {
+            console.log(error);
+        }
+        };
 
-    makeApiCall();
+        makeApiCall();
 
-    const intervalId = setInterval(makeApiCall, 3000);
+        const intervalId = setInterval(makeApiCall, 3000);
 
-    return () => clearInterval(intervalId);
-  }, []);
+        return () => clearInterval(intervalId);
+    }, []);
 
     const fetchAllStrategy = async() => {
         try {
@@ -69,7 +69,6 @@ const Content: React.FC<{ pathname: string }> = ({ pathname }) => {
             console.log(res.data);
             if (Array.isArray(res.data)) {
                 setServiceAnalysis(res.data.map((strategy: Service) => ({
-
                     id: strategy.id,
                     name: strategy.name,
                     desc: strategy.desc || "No description available",
@@ -85,55 +84,13 @@ const Content: React.FC<{ pathname: string }> = ({ pathname }) => {
     }
 
     useEffect(() => {
-        async function verifyLogin() {
-            const token = localStorage.getItem("token");
-            if (token) {
-                setLoading(true);
-                try {
-                    const res = await axios.get(`${baseURL}/auth/verify`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-                    if (res.data) {
-                        setIsVerified(true);
-                        await fetchAllStrategy();
-                    } else {
-                        setTimeout(() => {
-                            router.push("/login");
-                        }, 500);
-                    }
-                } catch (error) {
-                    console.error("Verification failed:", error);
-                    setTimeout(() => {
-                        router.push("/login");
-                    }, 500);
-                } finally {
-                    setLoading(false);
-                }
-            } else {
-                setTimeout(() => {
-                    router.push("/login");
-                }, 500);
-            }
-        }
-        verifyLogin();
-    }, [router]);
+        setLoading(true);
+        fetchAllStrategy()
+          .finally(() => setLoading(false));
+    }, []);
 
     if (loading) {
-        return (
-            <>
-                <Loader customMessage="Please wait while we verify your credentials" />
-            </>
-        );
-    }
-
-    if (!isVerified) {
-        return (
-            <>
-                <Loader customMessage="Redirecting to login page..." />
-            </>
-        );
+        return <Loader customMessage="Loading analysis data..." />;
     }
 
     return (
