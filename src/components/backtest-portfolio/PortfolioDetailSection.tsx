@@ -34,12 +34,12 @@ interface PortfolioDetailSectionProps {
   tickerData: Asset[];
 }
 
-const colorMap: Record<string, string> = {
-  'VTSMX': 'bg-blue-700',
-  'VGTSX': 'bg-green-400',
-  'VGSIX': 'bg-gray-400',
-  'VBMFX': 'bg-gray-700',
-};
+// const colorMap: Record<string, string> = {
+//   'VTSMX': 'bg-blue-700',
+//   'VGTSX': 'bg-green-400',
+//   'VGSIX': 'bg-gray-400',
+//   'VBMFX': 'bg-gray-700',
+// };
 
 // const PortfolioLegend: React.FC<PortfolioLegendProps> = ({ assets, colors }) => (
 //   <div className="mt-4 text-xs flex justify-center align-center gap-2">
