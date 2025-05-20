@@ -32,6 +32,7 @@ interface PortfolioDetailSectionProps {
   annualReturnData: AnnualReturnData[]
 }
 
+
 const PortfolioDetailSection: React.FC<PortfolioDetailSectionProps> = 
   ({ 
     portfolio,
@@ -40,6 +41,7 @@ const PortfolioDetailSection: React.FC<PortfolioDetailSectionProps> =
     rollingRetunsData,
     annualReturnData
   }) => {
+
   const assets = tickerData;
   const portfolioName = portfolio?.name || 'Portfolio 1';
 
