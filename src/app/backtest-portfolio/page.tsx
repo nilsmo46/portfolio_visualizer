@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 import { useSearchParams } from 'next/navigation';
 import Sidebar from "@/components/backtest-portfolio/Sidebar"
@@ -6,7 +7,7 @@ import { ExternalLink, FileText, FileSpreadsheet } from "lucide-react";
 import React, { Suspense, useEffect, useState } from 'react'; 
 import axios from '@/lib/axios';
 import Loader from '@/components/Loader';
-import PortfolioDetailSection, { Portfolio } from '@/components/backtest-portfolio/PortfolioDetailSection';
+import PortfolioDetailSection, { Asset, Portfolio } from '@/components/backtest-portfolio/PortfolioDetailSection';
 import PortfolioEditModal from '@/components/backtest-portfolio/PortfolioEditModal';
 import { baseURL } from '@/constants';
 import ProtectedRoute from '@/components/Protected-Route';
@@ -26,12 +27,27 @@ const metrics = [
   { metric: 'Worst Year', portfolio: '-22.24%', benchmark: '-37.04%' }
 ];
 
+interface RollingReturnData {
+  year: string;
+  return: unknown;
+}
+
+export interface AnnualReturnData {
+  year: string;
+  value: string;
+}
+
 const BacktestPortfolioContent = () => {
   const searchParams = useSearchParams();
   const modelIdFromUrl = searchParams.get('model_id');
   const [loading, setLoading] = useState(true);
   const [portfolioData, setPortfolioData] = useState<Portfolio[]>([]);
-  const [tickerData, setTickerData] = useState([]);
+  const [tickerData, setTickerData] = useState<Asset[]>([]);
+
+  const [rollingReturn, setRollingReturn] = useState<RollingReturnData[]>([])
+  const [annualReturn, setAnnualReturn] = useState<AnnualReturnData[]>([])
+  const [portfolioGrowth, setPortfolioGrowth] = useState<any[]>([]) 
+  const [stats, setStats] = useState<any[]>([])
 
   useEffect(() => {
     const makeApiCall = async () => {
@@ -43,11 +59,8 @@ const BacktestPortfolioContent = () => {
         console.log(error);
       }
     };
-
     makeApiCall();
-
     const intervalId = setInterval(makeApiCall, 3000);
-
     return () => clearInterval(intervalId);
   }, []);
 
@@ -57,14 +70,30 @@ const BacktestPortfolioContent = () => {
       try {
         const res = await axios.get(`${baseURL}/monthly-stats/all?sort={"year":"asc"}&limit=100&offset=0&filter={"model_id": "${modelIdFromUrl}"}`);
         setPortfolioData(res.data);
-        
         const res1 = await axios.get(`${baseURL}/strategy/${modelIdFromUrl}`);
-        console.log(res1.data.ticker_strategy_map);
-        const tickerVal = res1.data.ticker_strategy_map.map((val: { [x: string]: any; }) => (
+        const rollingReturnFormattedData = Object.entries(res1.data.rolling_returns.returns.returns).map(([key, value]) => ({
+          year: key.replace(/_/g, " ").replace("year", "Year"),
+          return: value
+        }));
+        setRollingReturn(rollingReturnFormattedData)
+
+        const annualReturnFormattedData = res1.data.annual_return.map((val: any) => {
+          return {
+            year: val.year,
+            value: val.value
+          }
+        })
+        console.log("okkkk: ", annualReturnFormattedData);
+        setAnnualReturn(annualReturnFormattedData)
+        setPortfolioGrowth(res1.data.portfolio_growth)
+        setStats(res1.data.stats)
+
+        const tickerVal = res1.data.strategy.ticker_strategy_map.map((val: { [x: string]: any; }) => (
           val["ticker"]
         ));
-        console.log(tickerVal);
+        
         setTickerData(tickerVal);
+
       } catch (error) {
         console.error("Error fetching portfolio data:", error);
       } finally {
@@ -82,16 +111,16 @@ const BacktestPortfolioContent = () => {
   }
 
   return (
-    <div className="flex no-scrollbar">
+    <div className="flex overflow-hidden">
       <Sidebar />
-      <div className="relative w-full">
+      <div className="flex flex-col w-full relative overflow-hidden">
         {/* Fixed navbar */}
-        <div className=" flex justify-end fixed top-20 right-10 left-[200px] bg-[#e9ecf3]  p-2 items-center border-b rounded-md">
+        <div className="flex justify-end sticky top-0 bg-[#e9ecf3] p-2 items-center border-b rounded-md z-10">
           <PortfolioEditModal />
         </div>
         
         {/* Main content with padding to account for fixed navbar */}
-        <div className="p-6 pt-24 space-y-6 h-screen overflow-y-auto">
+        <div className="p-6 space-y-6 overflow-y-auto">
           <h1 className="text-3xl font-bold">Backtest Portfolio Asset Allocation</h1>
           <div className="flex-col justify-center">
             <div>
@@ -137,6 +166,8 @@ const BacktestPortfolioContent = () => {
             metrics={metrics} 
             benchmark={modelIdFromUrl as string}
             tickerData={tickerData}
+            rollingRetunsData={rollingReturn}
+            annualReturnData={annualReturn}
           />
         </div>
       </div>
