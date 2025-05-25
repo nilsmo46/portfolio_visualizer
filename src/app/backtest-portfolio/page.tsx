@@ -34,7 +34,7 @@ interface RollingReturnData {
 
 export interface AnnualReturnData {
   year: string;
-  value: string;
+  [key: string]: string;
 }
 
 const BacktestPortfolioContent = () => {

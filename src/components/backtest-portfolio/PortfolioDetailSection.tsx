@@ -6,6 +6,7 @@ import YearlyValueChart from "@/components/area-chart/AreaChart";
 import ChartBar from "@/components/bar-chart/BarChart";
 import ReusableTable from './TableOne';
 import { AnnualReturnData } from '@/app/backtest-portfolio/page';
+import ReusableBarChart from './AnnualDetails';
 
 export interface Asset {
   ticker: string;
@@ -95,6 +96,23 @@ const PortfolioDetailSection: React.FC<PortfolioDetailSectionProps> =
           { id: "year", header: "Year", align: "left" },
           { id: "value", header: "Value", align: "right" }
         ]}
+      />
+      <ReusableBarChart
+        data={annualReturnData}
+        chartConfigs={[
+          { dataKey: 'value', name: 'Annual Return', color: '#6300f9' }
+        ]}
+        title="Annual Performance Comparison"
+        subtitle="Portfolio Performance Over Time"
+        height={550}
+        showGrid={true}
+        xAxisLabel="Year"
+        yAxisLabel="Annual Return (%)"
+        barSize={10}
+        barGap={2}
+        barCategoryGap={12}
+        animationDuration={500}
+        tooltipSuffix="%"
       />
     </div>
   );
