@@ -259,7 +259,7 @@ export default function ReusableBarChart({
             )}
           />
           
-          {finalChartConfigs.map((config, index) => (
+          {finalChartConfigs.map((config) => (
             <Bar
               key={config.dataKey}
               dataKey={config.dataKey}
