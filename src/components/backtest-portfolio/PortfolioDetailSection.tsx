@@ -30,7 +30,8 @@ interface PortfolioDetailSectionProps {
   benchmark: string;
   tickerData: Asset[];
   rollingRetunsData: any;
-  annualReturnData: AnnualReturnData[]
+  annualReturnData: AnnualReturnData[],
+  rollingReturnGraphData: any[];
 }
 
 
@@ -40,7 +41,8 @@ const PortfolioDetailSection: React.FC<PortfolioDetailSectionProps> =
     benchmark, 
     tickerData,
     rollingRetunsData,
-    annualReturnData
+    annualReturnData,
+    rollingReturnGraphData,
   }) => {
 
   const assets = tickerData;
@@ -81,6 +83,8 @@ const PortfolioDetailSection: React.FC<PortfolioDetailSectionProps> =
       </div>
       <YearlyValueChart title="Portfolio Growth" modelId={benchmark} api="apiForAnnual" />
       <ChartBar title="Annual Returns"/>
+
+      {/* Rolling Return */}
       <ReusableTable 
         rows={rollingRetunsData} 
         title='Rolling Returns'
@@ -89,6 +93,26 @@ const PortfolioDetailSection: React.FC<PortfolioDetailSectionProps> =
           { id: "return", header: "Returns", align: "right" }
         ]}
       />
+      <ReusableBarChart
+        data={rollingReturnGraphData}
+        chartConfigs={[
+          { dataKey: 'value', name: 'Rolling Return', color: '#6300f9' }
+        ]}
+        title="Rolling Returns"
+        subtitle="Rolling Returns"
+        height={550}
+        showGrid={true}
+        xAxisLabel="Year"
+        yAxisLabel="Rolling Return (%)"
+        barSize={10}
+        barGap={2}
+        barCategoryGap={12}
+        animationDuration={500}
+        tooltipSuffix="%"
+      />
+
+
+      {/* Annual Return */}
       <ReusableTable 
         rows={annualReturnData.map(item => ({ ...item }))} 
         title='Annual Returns'

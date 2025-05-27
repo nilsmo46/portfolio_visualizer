@@ -45,8 +45,10 @@ const BacktestPortfolioContent = () => {
   const [tickerData, setTickerData] = useState<Asset[]>([]);
 
   const [rollingReturn, setRollingReturn] = useState<RollingReturnData[]>([])
+  const [rollingReturnData, setRollingReturnData] = useState<any[]>([])
   const [annualReturn, setAnnualReturn] = useState<AnnualReturnData[]>([])
   const [portfolioGrowth, setPortfolioGrowth] = useState<any[]>([]) 
+  const [portfolioGrowthReturn, setPortfolioGrowthReturn] = useState<any[]>([]) 
   const [stats, setStats] = useState<any[]>([])
 
   useEffect(() => {
@@ -75,6 +77,24 @@ const BacktestPortfolioContent = () => {
           year: key.replace(/_/g, " ").replace("year", "Year"),
           return: value
         }));
+        const portfolioGrowthReturnData = Object.entries(res1.data.portfolio_growth.returns.returns).map(([key, value]) => ({
+          year: key.replace(/_/g, " ").replace("year", "Year"),
+          return: value
+        }));
+        setPortfolioGrowthReturn(portfolioGrowthReturnData)
+        const portfolioGrowthData = res1.data.portfolio_growth.data.map((val: any) => {
+          return {
+            year: val.year,
+            return: val.value
+          };
+        })
+        const rollingReturnDataFormatted = res1.data.rolling_returns.data.map((val: any) => {
+          return {
+            year: val.year,
+            return: val.value
+          };
+        })
+        setRollingReturnData(rollingReturnDataFormatted)
         setRollingReturn(rollingReturnFormattedData)
 
         const annualReturnFormattedData = res1.data.annual_return.map((val: any) => {
@@ -83,7 +103,6 @@ const BacktestPortfolioContent = () => {
             value: val.value
           }
         })
-        console.log("okkkk: ", annualReturnFormattedData);
         setAnnualReturn(annualReturnFormattedData)
         setPortfolioGrowth(res1.data.portfolio_growth)
         setStats(res1.data.stats)
@@ -168,6 +187,7 @@ const BacktestPortfolioContent = () => {
             tickerData={tickerData}
             rollingRetunsData={rollingReturn}
             annualReturnData={annualReturn}
+            rollingReturnGraphData={rollingReturnData}
           />
         </div>
       </div>
